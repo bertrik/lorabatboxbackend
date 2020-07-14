@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public final class TtnAppConfig {
 
     @JsonProperty("name")
-    private String name = "particulatematter";
+    private String name = "batbox";
 
     @JsonProperty("key")
-    private String key = "ttn-account-v2.cNaB2zO-nRiXaCUYmSAugzm-BaG_ZSHbEc5KgHNQFsk";
+    private String key = "ttn-account-v2.zGpGyRv-mOgzxAAAdn6vR_dBx9uDNecsvrYGyPQIHTo";
 
     public String getName() {
         return name;

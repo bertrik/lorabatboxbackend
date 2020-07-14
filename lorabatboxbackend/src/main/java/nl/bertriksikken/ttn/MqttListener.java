@@ -1,6 +1,6 @@
 package nl.bertriksikken.ttn;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
@@ -12,6 +12,12 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import nl.bertriksikken.ttn.dto.TtnDownlinkMessage;
+import nl.bertriksikken.ttn.dto.TtnUplinkMessage;
+
 /**
  * Listener process for receiving data from MQTT.
  * 
@@ -22,6 +28,7 @@ public final class MqttListener {
     private static final Logger LOG = LoggerFactory.getLogger(MqttListener.class);
     private static final long DISCONNECT_TIMEOUT_MS = 3000;
 
+    private static final ObjectMapper mapper = new ObjectMapper();
     private final MqttClient mqttClient;
     private final MqttConnectOptions options;
 
@@ -33,15 +40,13 @@ public final class MqttListener {
      * @param appId    the name of the TTN application
      * @param appKey   the key of the TTN application
      */
-    public MqttListener(IMessageReceived callback, String url, String appId, String appKey) {
+    public MqttListener(String url, String appId, String appKey) {
         LOG.info("Creating client for MQTT server '{}' for app '{}'", url, appId);
         try {
             this.mqttClient = new MqttClient(url, MqttClient.generateClientId(), new MemoryPersistence());
         } catch (MqttException e) {
             throw new IllegalArgumentException(e);
         }
-        mqttClient.setCallback(new MqttCallbackHandler(mqttClient, "+/devices/+/up", callback));
-
         // create connect options
         options = new MqttConnectOptions();
         options.setUserName(appId);
@@ -49,6 +54,13 @@ public final class MqttListener {
         options.setAutomaticReconnect(true);
     }
 
+    /**
+     * @param callback the uplink callback
+     */
+    public void setUplinkCallback(IMessageReceived callback) {
+        mqttClient.setCallback(new MqttCallbackHandler(mqttClient, "+/devices/+/up", callback));
+    }
+    
     /**
      * Starts this module.
      * 
@@ -70,6 +82,15 @@ public final class MqttListener {
         }
     }
 
+    public void sendDownlink(String appId, String devId, TtnDownlinkMessage downlink) throws MqttException, JsonProcessingException {
+        String message = mapper.writeValueAsString(downlink);
+        
+        String topic = appId + "/devices/" + devId + "/down";
+        MqttMessage mqttMessage = new MqttMessage(message.getBytes(Charset.forName("UTF-8")));
+        LOG.info("Sending downlink to {}: {}", topic, message);
+        mqttClient.publish(topic, mqttMessage);
+    }
+    
     /**
      * MQTT callback handler, (re-)subscribes to the topic and forwards incoming
      * messages.
@@ -97,8 +118,8 @@ public final class MqttListener {
 
             // notify our listener, in an exception safe manner
             try {
-                String message = new String(mqttMessage.getPayload(), StandardCharsets.US_ASCII);
-                listener.messageReceived(topic, message);
+                TtnUplinkMessage uplink = mapper.readValue(mqttMessage.getPayload(), TtnUplinkMessage.class);
+                listener.messageReceived(topic, uplink);
             } catch (Exception e) {
                 LOG.trace("Caught exception", e);
                 LOG.error("Caught exception in MQTT listener: {}", e.getMessage());

@@ -31,6 +31,8 @@ public final class TtnUplinkMessageTest {
 	        Assert.assertNotNull(message.port);
 	        Assert.assertNotNull(message.counter);
 	        Assert.assertNotNull(message.rawPayload);
+	        
+	        System.out.println(message.toString());
         }
 	}
 

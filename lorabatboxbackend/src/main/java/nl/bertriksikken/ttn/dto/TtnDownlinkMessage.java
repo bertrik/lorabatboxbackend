@@ -15,7 +15,7 @@ public final class TtnDownlinkMessage {
     @JsonProperty("payload_raw")
     byte[] rawPayload;
 
-    TtnDownlinkMessage(int port, boolean confirmed, byte[] rawPayload) {
+    public TtnDownlinkMessage(int port, boolean confirmed, byte[] rawPayload) {
         this.port = port;
         this.confirmed = confirmed;
         this.rawPayload = rawPayload;

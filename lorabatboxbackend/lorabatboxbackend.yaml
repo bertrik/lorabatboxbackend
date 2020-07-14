@@ -1,0 +1,6 @@
+---
+ttn:
+  mqtt_url: "tcp://eu.thethings.network"
+  apps:
+  - name: "batbox"
+    key: "ttn-account-v2.zGpGyRv-mOgzxAAAdn6vR_dBx9uDNecsvrYGyPQIHTo"
