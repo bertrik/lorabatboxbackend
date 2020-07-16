@@ -64,7 +64,7 @@ public final class LoraBatboxBackend {
                 long actual = Instant.now().getEpochSecond();
                 long timeDiff = (actual - deviceTime);
                 LOG.info("Received time: {}, Actual time: {}, difference {}", deviceTime, actual, timeDiff);
-                if (Math.abs(timeDiff) > 60) {
+                if (Math.abs(timeDiff) > 30) {
                     // send a downlink to correct the offset
                     ByteBuffer dlPayload = ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN);
                     dlPayload.putInt((int) timeDiff);
